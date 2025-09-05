@@ -6,6 +6,7 @@
     <title>Black Russia | Магазин валюты</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Стили остаются без изменений */
         :root {
             --main-bg-color: #000;
             --accent-color: #ff0000;
@@ -236,6 +237,27 @@
             width: 50%;
         }
         
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #333;
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 480px) {
             .server-grid {
                 grid-template-columns: 1fr;
@@ -364,9 +386,14 @@
                 </div>
             </div>
             
-            <div class="button-group">
+            <div class="loading" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+                <p>Перенаправление к боту для оплаты...</p>
+            </div>
+            
+            <div class="button-group" id="confirmationButtons">
                 <button class="action-button secondary-button" onclick="backToBankDetails()">Вернуться назад</button>
-                <button class="action-button" onclick="proceedToPayment()">Перейти к оплате</button>
+                <button class="action-button" onclick="redirectToBot()">Перейти к оплате</button>
             </div>
         </div>
     </div>
@@ -377,7 +404,10 @@
         tg.expand();
         tg.enableClosingConfirmation();
         
-        // Список серверов с доступным количеством монет
+        // Настройки бота
+        const BOT_USERNAME = 'br_payments_bot'; // Замените на username вашего бота
+        
+        // Полный список серверов с доступным количеством монет
         const servers = [
             { name: "№1 | Red", available: getRandomAmount() },
             { name: "№2 | Green", available: getRandomAmount() },
@@ -460,6 +490,7 @@
         let selectedServer = null;
         let selectedAmount = 0;
         let totalPrice = 0;
+        let orderId = null;
         
         // Генерация случайного количества монет от 5.000.000 до 16.000.000
         function getRandomAmount() {
@@ -654,20 +685,45 @@
             document.getElementById('bankModal').style.display = 'flex';
         }
         
-        // Переход к оплате
-        function proceedToPayment() {
-            // Здесь будет реализация перехода к оплате
-            tg.showPopup({
-                title: 'Переход к оплате',
-                message: `Заказ успешно сформирован!\n\nСервер: ${selectedServer.name}\nСумма: ${formatNumber(selectedAmount)} монет\nК оплате: ${totalPrice.toFixed(2)} руб.`,
-                buttons: [{type: 'ok'}]
-            });
+        // Перенаправление к боту для оплаты
+        function redirectToBot() {
+            // Генерируем уникальный ID заказа
+            orderId = 'BR_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             
-            // Закрываем модальное окно
-            closeModal('confirmationModal');
+            // Получаем данные для передачи
+            const bankAccount = document.getElementById('bankAccount').value;
+            const accountName = document.getElementById('accountName').value;
             
-            // В реальном приложении здесь будет редирект на платежную систему
-            // window.location.href = 'https://payment-system.com/?amount=' + selectedAmount + '&server=' + selectedServer.name;
+            // Создаем сообщение для бота
+            const message = `Новый заказ: ${orderId}\n` +
+                           `Сервер: ${selectedServer.name}\n` +
+                           `Количество: ${formatNumber(selectedAmount)} монет\n` +
+                           `Сумма: ${totalPrice.toFixed(2)} руб.\n` +
+                           `Банковский счет: ${bankAccount}\n` +
+                           `Название счета: ${accountName}`;
+            
+            // Кодируем сообщение для URL
+            const encodedMessage = encodeURIComponent(message);
+            
+            // Показываем индикатор загрузки
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('confirmationButtons').style.display = 'none';
+            
+            // Создаем ссылку для открытия бота с предзаполненным сообщением
+            const botDeepLink = `https://t.me/${BOT_USERNAME}?start=${orderId}`;
+            
+            // Открываем бота через 2 секунды (для демонстрации)
+            setTimeout(() => {
+                // Открываем бота в Telegram
+                tg.openTelegramLink(botDeepLink);
+                
+                // Закрываем модальное окно через некоторое время
+                setTimeout(() => {
+                    closeModal('confirmationModal');
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('confirmationButtons').style.display = 'flex';
+                }, 2000);
+            }, 2000);
         }
         
         // Инициализация при загрузке
