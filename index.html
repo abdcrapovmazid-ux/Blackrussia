@@ -6,7 +6,6 @@
     <title>Black Russia | Магазин валюты</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Стили остаются без изменений */
         :root {
             --main-bg-color: #000;
             --accent-color: #ff0000;
@@ -70,6 +69,17 @@
         .buy-button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+        }
+        
+        .history-button {
+            background: linear-gradient(to bottom, #333, #111);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
         }
         
         .modal {
@@ -253,6 +263,37 @@
             margin: 0 auto;
         }
         
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        
+        .history-item {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .history-order-id {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .history-details {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .empty-history {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+        }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -283,6 +324,7 @@
         <p style="text-align: center;">Выберите сервер для покупки валюты</p>
         
         <button class="buy-button" onclick="openServerModal()">Покупка</button>
+        <button class="history-button" onclick="openHistoryModal()">История операций</button>
     </div>
     
     <!-- Модальное окно выбора сервера -->
@@ -365,6 +407,10 @@
             
             <div class="order-summary">
                 <div class="summary-item">
+                    <span class="summary-label">Номер заказа:</span>
+                    <span class="summary-value" id="confirmOrderId">-</span>
+                </div>
+                <div class="summary-item">
                     <span class="summary-label">Сервер:</span>
                     <span class="summary-value" id="confirmServer">-</span>
                 </div>
@@ -397,6 +443,22 @@
             </div>
         </div>
     </div>
+    
+    <!-- Модальное окно истории операций -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>История операций</h2>
+                <button class="close-button" onclick="closeModal('historyModal')">&times;</button>
+            </div>
+            
+            <div class="history-list" id="historyList">
+                <!-- История операций будет добавлена через JavaScript -->
+            </div>
+            
+            <button class="action-button secondary-button" onclick="closeModal('historyModal')">Закрыть</button>
+        </div>
+    </div>
 
     <script>
         // Инициализация Telegram Web App
@@ -404,8 +466,11 @@
         tg.expand();
         tg.enableClosingConfirmation();
         
+        // Получаем ID пользователя Telegram
+        const userId = tg.initDataUnsafe.user?.id || 'default_user';
+        
         // Настройки бота
-        const BOT_USERNAME = 'br_payments_bot'; // Замените на username вашего бота
+        const BOT_USERNAME = 'YourPaymentBot'; // Замените на username вашего бота
         
         // Полный список серверов с доступным количеством монет
         const servers = [
@@ -497,6 +562,13 @@
             return Math.floor(Math.random() * (16000000 - 5000000 + 1)) + 5000000;
         }
         
+        // Генерация уникального номера заказа
+        function generateOrderId() {
+            const timestamp = Date.now().toString(36);
+            const randomStr = Math.random().toString(36).substr(2, 5);
+            return `BR${timestamp}${randomStr}`.toUpperCase();
+        }
+        
         // Форматирование числа с разделителями тысяч
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -535,6 +607,60 @@
             return parseInt(formattedNumber.replace(/\./g, '')) || 0;
         }
         
+        // Получение истории операций из localStorage
+        function getOrderHistory() {
+            const historyKey = `order_history_${userId}`;
+            const history = localStorage.getItem(historyKey);
+            return history ? JSON.parse(history) : [];
+        }
+        
+        // Сохранение операции в историю
+        function saveOrderToHistory(orderData) {
+            const historyKey = `order_history_${userId}`;
+            const history = getOrderHistory();
+            
+            // Добавляем дату операции
+            orderData.date = new Date().toLocaleString('ru-RU');
+            
+            // Добавляем новую операцию в начало истории
+            history.unshift(orderData);
+            
+            // Сохраняем только последние 50 операций
+            const limitedHistory = history.slice(0, 50);
+            
+            // Сохраняем в localStorage
+            localStorage.setItem(historyKey, JSON.stringify(limitedHistory));
+        }
+        
+        // Отображение истории операций
+        function displayOrderHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = getOrderHistory();
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">История операций пуста</div>';
+                return;
+            }
+            
+            let html = '';
+            history.forEach(order => {
+                html += `
+                    <div class="history-item">
+                        <div class="history-order-id">Заказ #${order.orderId}</div>
+                        <div class="history-details">
+                            <div>Сервер: ${order.server}</div>
+                            <div>Сумма: ${order.amount} монет</div>
+                            <div>Цена: ${order.price} руб.</div>
+                            <div>Банковский счет: ${order.bankAccount}</div>
+                            <div>Дата: ${order.date}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+        
         // Заполнение списка серверов
         function populateServers() {
             const serverList = document.getElementById('serverList');
@@ -565,6 +691,12 @@
         function openServerModal() {
             document.getElementById('serverModal').style.display = 'flex';
             populateServers();
+        }
+        
+        // Открытие модального окна истории операций
+        function openHistoryModal() {
+            displayOrderHistory();
+            document.getElementById('historyModal').style.display = 'flex';
         }
         
         // Закрытие модального окна
@@ -668,7 +800,11 @@
         function openConfirmationModal() {
             closeModal('bankModal');
             
+            // Генерируем уникальный номер заказа
+            orderId = generateOrderId();
+            
             // Заполняем данные в модальном окне подтверждения
+            document.getElementById('confirmOrderId').textContent = orderId;
             document.getElementById('confirmServer').textContent = selectedServer.name;
             document.getElementById('confirmAmount').textContent = `${formatNumber(selectedAmount)} монет`;
             document.getElementById('confirmPrice').textContent = `${totalPrice.toFixed(2)} руб.`;
@@ -687,12 +823,19 @@
         
         // Перенаправление к боту для оплаты
         function redirectToBot() {
-            // Генерируем уникальный ID заказа
-            orderId = 'BR_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            
             // Получаем данные для передачи
             const bankAccount = document.getElementById('bankAccount').value;
             const accountName = document.getElementById('accountName').value;
+            
+            // Сохраняем заказ в историю
+            saveOrderToHistory({
+                orderId: orderId,
+                server: selectedServer.name,
+                amount: `${formatNumber(selectedAmount)} монет`,
+                price: `${totalPrice.toFixed(2)} руб.`,
+                bankAccount: bankAccount,
+                accountName: accountName
+            });
             
             // Создаем сообщение для бота
             const message = `Новый заказ: ${orderId}\n` +
