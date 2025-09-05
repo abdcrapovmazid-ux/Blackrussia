@@ -14,6 +14,7 @@
             --hover-color: #330000;
             --error-color: #ff4444;
             --success-color: #00aa00;
+            --warning-color: #ff8c00;
         }
         
         body {
@@ -338,6 +339,13 @@
             border-radius: 5px;
             padding: 10px;
             margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover {
+            background-color: var(--hover-color);
+            border-color: var(--accent-color);
         }
         
         .history-order-id {
@@ -372,6 +380,37 @@
             margin: 10px 0;
             word-break: break-all;
             font-family: monospace;
+        }
+        
+        .usdt-rate {
+            background-color: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .usdt-amount {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .warning-text {
+            color: var(--warning-color);
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .support-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .support-link:hover {
+            text-decoration: underline;
         }
         
         @keyframes spin {
@@ -556,6 +595,11 @@
                 </div>
             </div>
             
+            <div class="usdt-rate">
+                <div>Курс: 1 USDT = 83.50 RUB</div>
+                <div class="usdt-amount" id="usdtTotalAmount">- USDT</div>
+            </div>
+            
             <div class="payment-info">
                 <div class="input-group">
                     <label class="input-label">Адрес кошелька:</label>
@@ -638,6 +682,31 @@
             <button class="action-button secondary-button" onclick="closeModal('historyModal')">Закрыть</button>
         </div>
     </div>
+    
+    <!-- Модальное окно деталей операции -->
+    <div class="modal" id="orderDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Детали операции</h2>
+                <button class="close-button" onclick="closeModal('orderDetailsModal')">&times;</button>
+            </div>
+            
+            <div class="order-summary" id="orderDetailsContent">
+                <!-- Детали операции будут добавлены через JavaScript -->
+            </div>
+            
+            <div class="warning-text">
+                Обработка платежа
+            </div>
+            
+            <div style="text-align: center; margin: 15px 0;">
+                Чтобы ускорить процесс обратитесь: 
+                <a href="https://t.me/mmaajorka" class="support-link" target="_blank">@mmaajorka</a>
+            </div>
+            
+            <button class="action-button secondary-button" onclick="closeModal('orderDetailsModal')">Закрыть</button>
+        </div>
+    </div>
 
     <script>
         // Инициализация Telegram Web App
@@ -647,6 +716,9 @@
         
         // Получаем ID пользователя Telegram
         const userId = tg.initDataUnsafe.user?.id || 'default_user';
+        
+        // Курс доллара
+        const USD_RATE = 83.50;
         
         // Полный список серверов с доступным количеством монет
         const servers = [
@@ -733,6 +805,7 @@
         let totalPrice = 0;
         let orderId = null;
         let paymentMethod = null;
+        let currentOrderDetails = null;
         
         // Генерация случайного количества монет от 5.000.000 до 16.000.000
         function getRandomAmount() {
@@ -822,14 +895,13 @@
             let html = '';
             history.forEach(order => {
                 html += `
-                    <div class="history-item">
+                    <div class="history-item" onclick="showOrderDetails('${order.orderId}')">
                         <div class="history-order-id">Заказ #${order.orderId}</div>
                         <div class="history-details">
                             <div>Сервер: ${order.server}</div>
                             <div>Сумма: ${order.amount} монет</div>
                             <div>Цена: ${order.price} руб.</div>
                             <div>Способ оплаты: ${order.paymentMethod}</div>
-                            <div>Банковский счет: ${order.bankAccount}</div>
                             <div>Дата: ${order.date}</div>
                         </div>
                     </div>
@@ -837,6 +909,54 @@
             });
             
             historyList.innerHTML = html;
+        }
+        
+        // Показать детали операции
+        function showOrderDetails(orderId) {
+            const history = getOrderHistory();
+            const order = history.find(item => item.orderId === orderId);
+            
+            if (order) {
+                currentOrderDetails = order;
+                
+                const detailsContent = document.getElementById('orderDetailsContent');
+                detailsContent.innerHTML = `
+                    <div class="summary-item">
+                        <span class="summary-label">Номер заказа:</span>
+                        <span class="summary-value">${order.orderId}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Сервер:</span>
+                        <span class="summary-value">${order.server}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Количество валюты:</span>
+                        <span class="summary-value">${order.amount}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Сумма к оплате:</span>
+                        <span class="summary-value">${order.price}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Способ оплаты:</span>
+                        <span class="summary-value">${order.paymentMethod}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Банковский счет:</span>
+                        <span class="summary-value">${order.bankAccount}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Название счета:</span>
+                        <span class="summary-value">${order.accountName}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Дата:</span>
+                        <span class="summary-value">${order.date}</span>
+                    </div>
+                `;
+                
+                document.getElementById('orderDetailsModal').style.display = 'flex';
+            }
         }
         
         // Заполнение списка серверов
@@ -1022,6 +1142,10 @@
             
             // Заполняем сумму к оплате
             document.getElementById('usdtAmount').textContent = `${totalPrice.toFixed(2)} руб.`;
+            
+            // Рассчитываем и отображаем сумму в USDT
+            const usdtAmount = (totalPrice / USD_RATE).toFixed(2);
+            document.getElementById('usdtTotalAmount').textContent = `${usdtAmount} USDT`;
             
             // Устанавливаем метод оплаты
             paymentMethod = "USDT (TRC-20)";
