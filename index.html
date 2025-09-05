@@ -26,6 +26,26 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Красные узоры на фоне */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255, 0, 0, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 0, 0.05) 0%, transparent 20%),
+                linear-gradient(45deg, transparent 49%, rgba(255, 0, 0, 0.03) 50%, transparent 51%),
+                linear-gradient(-45deg, transparent 49%, rgba(255, 0, 0, 0.03) 50%, transparent 51%);
+            background-size: 300px 300px, 300px 300px, 50px 50px, 50px 50px;
+            z-index: -1;
+            pointer-events: none;
         }
         
         .header {
@@ -34,6 +54,8 @@
             padding: 15px 0;
             text-align: center;
             box-shadow: 0 2px 10px rgba(255, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
         
         .logo {
@@ -41,6 +63,7 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
         
         .main-content {
@@ -48,6 +71,9 @@
             max-width: 500px;
             padding: 20px;
             box-sizing: border-box;
+            text-align: center;
+            position: relative;
+            z-index: 1;
         }
         
         .buy-button {
@@ -64,6 +90,8 @@
             display: block;
             box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
             transition: all 0.3s;
+            position: relative;
+            z-index: 1;
         }
         
         .buy-button:hover {
@@ -72,14 +100,25 @@
         }
         
         .history-button {
-            background: linear-gradient(to bottom, #333, #111);
+            background: linear-gradient(to bottom, #ff0000, #800000);
             color: white;
             border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            font-size: 14px;
+            border-radius: 25px;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 20px;
+            margin: 10px auto;
+            display: block;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .history-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
         }
         
         .modal {
@@ -105,6 +144,7 @@
             overflow-y: auto;
             padding: 20px;
             box-sizing: border-box;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
         }
         
         .modal-header {
@@ -184,11 +224,12 @@
             display: none;
         }
         
-        .calculation, .order-summary {
+        .calculation, .order-summary, .payment-details {
             background-color: #2a2a2a;
             padding: 15px;
             border-radius: 5px;
             margin: 15px 0;
+            border: 1px solid #444;
         }
         
         .summary-item {
@@ -223,10 +264,31 @@
             width: 100%;
             transition: all 0.2s;
             margin-top: 10px;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
         }
         
         .secondary-button {
             background: #444;
+        }
+        
+        .payment-method-button {
+            background: linear-gradient(to bottom, #ff0000, #800000);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            margin: 10px 0;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+        
+        .payment-method-button:hover {
+            background: linear-gradient(to bottom, #ff3333, #993333);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
         }
         
         .action-button:disabled {
@@ -236,6 +298,7 @@
         
         .action-button:hover:not(:disabled) {
             background: linear-gradient(to bottom, #ff3333, #993333);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
         }
         
         .button-group {
@@ -292,6 +355,23 @@
             text-align: center;
             color: #aaa;
             padding: 20px;
+        }
+        
+        .payment-info {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #444;
+        }
+        
+        .payment-address {
+            background-color: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
         }
         
         @keyframes spin {
@@ -359,7 +439,7 @@
             <div class="calculation">
                 <div class="calculation-line">
                     <span>Курс:</span>
-                    <span>1.000.000 монет = 75 руб.</span>
+                    <span>1.000.000 монет = 105 руб.</span>
                 </div>
                 <div class="calculation-line">
                     <span>Сумма к оплате:</span>
@@ -432,14 +512,113 @@
                 </div>
             </div>
             
-            <div class="loading" id="loadingIndicator">
-                <div class="loading-spinner"></div>
-                <p>Перенаправление к боту для оплаты...</p>
-            </div>
-            
             <div class="button-group" id="confirmationButtons">
                 <button class="action-button secondary-button" onclick="backToBankDetails()">Вернуться назад</button>
-                <button class="action-button" onclick="redirectToBot()">Перейти к оплате</button>
+                <button class="action-button" onclick="openPaymentMethodModal()">Перейти к оплате</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно выбора способа оплаты -->
+    <div class="modal" id="paymentMethodModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Выберите способ оплаты</h2>
+                <button class="close-button" onclick="closeModal('paymentMethodModal')">&times;</button>
+            </div>
+            
+            <div class="payment-details">
+                <div class="summary-item">
+                    <span class="summary-label">Сумма к оплате:</span>
+                    <span class="summary-value" id="paymentAmount">-</span>
+                </div>
+            </div>
+            
+            <button class="payment-method-button" onclick="openUsdtPaymentModal()">USDT</button>
+            <button class="payment-method-button" onclick="openCardPaymentModal()">По карте</button>
+            
+            <button class="action-button secondary-button" onclick="backToConfirmation()">Назад</button>
+        </div>
+    </div>
+    
+    <!-- Модальное окно оплаты USDT -->
+    <div class="modal" id="usdtPaymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Оплата криптовалютой</h2>
+                <button class="close-button" onclick="closeModal('usdtPaymentModal')">&times;</button>
+            </div>
+            
+            <div class="payment-details">
+                <div class="summary-item">
+                    <span class="summary-label">Сумма к оплате:</span>
+                    <span class="summary-value" id="usdtAmount">-</span>
+                </div>
+            </div>
+            
+            <div class="payment-info">
+                <div class="input-group">
+                    <label class="input-label">Адрес кошелька:</label>
+                    <div class="payment-address">T9ympy3KhgGcVgA5rmj6rmhPoPTBkswrik</div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Сеть:</label>
+                    <div>TRC-20</div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="action-button secondary-button" onclick="backToPaymentMethod()">Отменить</button>
+                <button class="action-button" onclick="processUsdtPayment()">Оплачено</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно оплаты по карте -->
+    <div class="modal" id="cardPaymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Оплата по карте</h2>
+                <button class="close-button" onclick="closeModal('cardPaymentModal')">&times;</button>
+            </div>
+            
+            <div class="payment-details">
+                <div class="summary-item">
+                    <span class="summary-label">Сумма к оплате:</span>
+                    <span class="summary-value" id="cardAmount">-</span>
+                </div>
+            </div>
+            
+            <div class="payment-info">
+                <div class="input-group">
+                    <label class="input-label">Номер карты:</label>
+                    <div class="payment-address">5599002119761130</div>
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Банк:</label>
+                    <div>ЮМани</div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="action-button secondary-button" onclick="backToPaymentMethod()">Отменить</button>
+                <button class="action-button" onclick="processCardPayment()">Оплачено</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно обработки платежа -->
+    <div class="modal" id="processingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Обработка платежа</h2>
+            </div>
+            
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Ожидайте, обработка платежа...</p>
             </div>
         </div>
     </div>
@@ -468,9 +647,6 @@
         
         // Получаем ID пользователя Telegram
         const userId = tg.initDataUnsafe.user?.id || 'default_user';
-        
-        // Настройки бота
-        const BOT_USERNAME = 'YourPaymentBot'; // Замените на username вашего бота
         
         // Полный список серверов с доступным количеством монет
         const servers = [
@@ -556,6 +732,7 @@
         let selectedAmount = 0;
         let totalPrice = 0;
         let orderId = null;
+        let paymentMethod = null;
         
         // Генерация случайного количества монет от 5.000.000 до 16.000.000
         function getRandomAmount() {
@@ -651,6 +828,7 @@
                             <div>Сервер: ${order.server}</div>
                             <div>Сумма: ${order.amount} монет</div>
                             <div>Цена: ${order.price} руб.</div>
+                            <div>Способ оплаты: ${order.paymentMethod}</div>
                             <div>Банковский счет: ${order.bankAccount}</div>
                             <div>Дата: ${order.date}</div>
                         </div>
@@ -753,8 +931,8 @@
             // Скрываем ошибку, если все в порядке
             amountError.style.display = 'none';
             
-            // Расчет стоимости (1.000.000 = 75 руб.)
-            totalPrice = (amount / 1000000) * 75;
+            // Расчет стоимости (1.000.000 = 105 руб.)
+            totalPrice = (amount / 1000000) * 105;
             totalPriceElement.textContent = `${totalPrice.toFixed(2)} руб.`;
             
             // Активируем кнопку продолжения
@@ -821,11 +999,64 @@
             document.getElementById('bankModal').style.display = 'flex';
         }
         
-        // Перенаправление к боту для оплаты
-        function redirectToBot() {
-            // Получаем данные для передачи
-            const bankAccount = document.getElementById('bankAccount').value;
-            const accountName = document.getElementById('accountName').value;
+        // Открытие модального окна выбора способа оплаты
+        function openPaymentMethodModal() {
+            closeModal('confirmationModal');
+            
+            // Заполняем сумму к оплате
+            document.getElementById('paymentAmount').textContent = `${totalPrice.toFixed(2)} руб.`;
+            
+            // Показываем модальное окно выбора способа оплаты
+            document.getElementById('paymentMethodModal').style.display = 'flex';
+        }
+        
+        // Возврат к подтверждению заказа
+        function backToConfirmation() {
+            closeModal('paymentMethodModal');
+            document.getElementById('confirmationModal').style.display = 'flex';
+        }
+        
+        // Открытие модального окна оплаты USDT
+        function openUsdtPaymentModal() {
+            closeModal('paymentMethodModal');
+            
+            // Заполняем сумму к оплате
+            document.getElementById('usdtAmount').textContent = `${totalPrice.toFixed(2)} руб.`;
+            
+            // Устанавливаем метод оплаты
+            paymentMethod = "USDT (TRC-20)";
+            
+            // Показываем модальное окно оплаты USDT
+            document.getElementById('usdtPaymentModal').style.display = 'flex';
+        }
+        
+        // Открытие модального окна оплаты по карте
+        function openCardPaymentModal() {
+            closeModal('paymentMethodModal');
+            
+            // Заполняем сумму к оплате
+            document.getElementById('cardAmount').textContent = `${totalPrice.toFixed(2)} руб.`;
+            
+            // Устанавливаем метод оплаты
+            paymentMethod = "Карта (ЮМани)";
+            
+            // Показываем модальное окно оплаты по карте
+            document.getElementById('cardPaymentModal').style.display = 'flex';
+        }
+        
+        // Возврат к выбору способа оплаты
+        function backToPaymentMethod() {
+            if (document.getElementById('usdtPaymentModal').style.display === 'flex') {
+                closeModal('usdtPaymentModal');
+            } else {
+                closeModal('cardPaymentModal');
+            }
+            document.getElementById('paymentMethodModal').style.display = 'flex';
+        }
+        
+        // Обработка оплаты USDT
+        function processUsdtPayment() {
+            closeModal('usdtPaymentModal');
             
             // Сохраняем заказ в историю
             saveOrderToHistory({
@@ -833,40 +1064,44 @@
                 server: selectedServer.name,
                 amount: `${formatNumber(selectedAmount)} монет`,
                 price: `${totalPrice.toFixed(2)} руб.`,
-                bankAccount: bankAccount,
-                accountName: accountName
+                paymentMethod: paymentMethod,
+                bankAccount: document.getElementById('bankAccount').value,
+                accountName: document.getElementById('accountName').value
             });
             
-            // Создаем сообщение для бота
-            const message = `Новый заказ: ${orderId}\n` +
-                           `Сервер: ${selectedServer.name}\n` +
-                           `Количество: ${formatNumber(selectedAmount)} монет\n` +
-                           `Сумма: ${totalPrice.toFixed(2)} руб.\n` +
-                           `Банковский счет: ${bankAccount}\n` +
-                           `Название счета: ${accountName}`;
+            // Показываем модальное окно обработки платежа
+            document.getElementById('processingModal').style.display = 'flex';
             
-            // Кодируем сообщение для URL
-            const encodedMessage = encodeURIComponent(message);
-            
-            // Показываем индикатор загрузки
-            document.getElementById('loadingIndicator').style.display = 'block';
-            document.getElementById('confirmationButtons').style.display = 'none';
-            
-            // Создаем ссылку для открытия бота с предзаполненным сообщением
-            const botDeepLink = `https://t.me/${BOT_USERNAME}?start=${orderId}`;
-            
-            // Открываем бота через 2 секунды (для демонстрации)
+            // Через 3 секунды переходим к истории операций
             setTimeout(() => {
-                // Открываем бота в Telegram
-                tg.openTelegramLink(botDeepLink);
-                
-                // Закрываем модальное окно через некоторое время
-                setTimeout(() => {
-                    closeModal('confirmationModal');
-                    document.getElementById('loadingIndicator').style.display = 'none';
-                    document.getElementById('confirmationButtons').style.display = 'flex';
-                }, 2000);
-            }, 2000);
+                closeModal('processingModal');
+                openHistoryModal();
+            }, 3000);
+        }
+        
+        // Обработка оплаты по карте
+        function processCardPayment() {
+            closeModal('cardPaymentModal');
+            
+            // Сохраняем заказ в историю
+            saveOrderToHistory({
+                orderId: orderId,
+                server: selectedServer.name,
+                amount: `${formatNumber(selectedAmount)} монет`,
+                price: `${totalPrice.toFixed(2)} руб.`,
+                paymentMethod: paymentMethod,
+                bankAccount: document.getElementById('bankAccount').value,
+                accountName: document.getElementById('accountName').value
+            });
+            
+            // Показываем модальное окно обработки платежа
+            document.getElementById('processingModal').style.display = 'flex';
+            
+            // Через 3 секунды переходим к истории операций
+            setTimeout(() => {
+                closeModal('processingModal');
+                openHistoryModal();
+            }, 3000);
         }
         
         // Инициализация при загрузке
